@@ -1,4 +1,6 @@
 library(shiny)
+library(ggplot2)
+library(extraDistr)
 #Define UI ----
 
 ui <- fluidPage(
@@ -6,8 +8,7 @@ ui <- fluidPage(
   titlePanel("Repartiile in practica"),
   
   selectInput("repart", "Selectati repartitia", choices= c("Binomiala", 
-                                                           "Bernoulli",
-                                                           "Negativ Binomiala",
+                                                           "Uniforma discreta",
                                                            "Poisson",
                                                            "Geometrica",
                                                            "Hipergeometrica")
@@ -36,32 +37,6 @@ ui <- fluidPage(
                    )
                  )
 ),
-  conditionalPanel(condition = "input.repart == 'Bernoulli'",
-                 sidebarLayout(
-                   sidebarPanel(
-
-                     sliderInput("bern_p", "Probabilitatea de realizare :", min = 0, max = 1, value = 0.5, step = 0.01),
-                     radioButtons("bern_func", "Selectati Histograma", choices = c("Functia de repartitie",
-                                                                              "Functia de masa")
-                     ),
-                     numericInput("a", "a = ", value = 10),
-                     numericInput("b", "b = ", value = 10)
-
-
-                   ),
-
-
-                   mainPanel(
-                     conditionalPanel(condition = "input.bern_func == 'Functia de repartitie'",
-                                      plotOutput("bern_cdf")
-                     ),
-                     conditionalPanel(condition = "input.bern_func == 'Functia de masa'",
-                                      plotOutput("bern_pmf")
-
-                     )
-                   )
-                 )
-),
 
 conditionalPanel(condition = "input.repart == 'Hipergeometrica'",
                  sidebarLayout(
@@ -84,37 +59,69 @@ conditionalPanel(condition = "input.repart == 'Hipergeometrica'",
                      
                    )
                  )
+),
+
+conditionalPanel(condition = "input.repart == 'Uniforma discreta'",
+                 sidebarLayout(
+                   sidebarPanel(
+                     numericInput("ud_min", "Minimul : ", value = 5, min = 1, max = 20),
+                     numericInput("ud_max", "Maximul : ", value = 15, min = 1, max = 20),
+                     numericInput("ud_a", "a = ", value = 9, min = 0),
+                     numericInput("ud_b", "b = ", value = 17, min = 0)
+                     
+                   ),
+                   
+                   
+                   mainPanel(
+                     
+                     plotOutput("ud_cdf"),
+                     plotOutput("ud_pmf"),
+                     plotOutput("ud_prob")
+                     
+                   )
+                 )
+),
+
+conditionalPanel(condition = "input.repart == 'Geometrica'",
+                 sidebarLayout(
+                   sidebarPanel(
+                     sliderInput("geom_p", "Probabilitatea de realizare :", min = 0, max = 1, value = 0.5, step = 0.01),
+                     numericInput("geom_a", "a = ", value = 3, min = 0),
+                     numericInput("geom_b", "b = ", value = 5, min = 0)
+                     
+                   ),
+                   
+                   
+                   mainPanel(
+                     
+                     plotOutput("geom_cdf"),
+                     plotOutput("geom_pmf"),
+                     plotOutput("geom_prob")
+                     
+                   )
+                 )
+),
+conditionalPanel(condition = "input.repart == 'Poisson'",
+                 sidebarLayout(
+                   sidebarPanel(
+                     numericInput("pois_lambda", "Rata aparitiei : ", value = 50, min = 1, max = 100),
+                     numericInput("pois_a", "a = ", value = 80),
+                     numericInput("pois_b", "b = ", value = 70)
+                     
+                     
+                   ),
+                   
+                   
+                   mainPanel(
+                     
+                     plotOutput("pois_cdf"),
+                     plotOutput("pois_pmf"),
+                     plotOutput("pois_prob")
+                     
+                   )
+                 )
 )
 
-
-# conditionalPanel(condition = "input.repart == 'Negativ Binomiala'",
-#                  sidebarLayout(
-#                    sidebarPanel(
-#                      
-#                      numericInput("nbinom_r", "Numarul de esecuri : ", value = 10, min = 1, max = 1000),
-#                      numericInput("nbinom_n", "Numarul de succese : ", value = 10, min = 1, max = 1000),
-#                      sliderInput("nbinom_p", "Probabilitatea de realizare :", min = 0, max = 1, value = 0.5, step = 0.01),
-#                      radioButtons("nbinom_func", "Selectati Histograma", choices = c("Functia de repartitie", 
-#                                                                                     "Functia de masa")
-#                      ),
-#                      numericInput("a", "a = ", value = 10),
-#                      numericInput("b", "b = ", value = 10)
-#                      
-#                      
-#                    ),
-#                    
-#                    
-#                    mainPanel(
-#                      conditionalPanel(condition = "input.nbinom_func == 'Functia de repartitie'",
-#                                       plotOutput("nbinom_cdf")
-#                      ),
-#                      conditionalPanel(condition = "input.nbinom_func == 'Functia de masa'",
-#                                       plotOutput("nbinom_pmf")
-#                                       
-#                      )
-#                    )
-#                  )
-# ),
 
 
 )
@@ -180,63 +187,122 @@ server <- function(input, output) {
     plot_bars(x, cdf, input$binom_a, input$binom_b, input$binom_n)
   })
   
-  #Bernoulli distribution
-  output$bern_cdf <- renderPlot({
-    prob <- input$bern_p
-    x <- c(0,1)
-    y <- c(1-prob, prob)
-    matplot(x, y, type = 's', xlab = "x", ylab = "P(X <= x)", main = "Bernoulli CDF")
-  })
-  output$bern_pmf <- renderPlot({
-    prob <- input$bern_p
-    x <- c(0,1)
-    y <- c(1-prob, prob)
-    barplot(y, names.arg=x, xlab = "x", ylab = "P(X = x)", main = "Bernoulli PMF")
-  })
   
   # Hipergeomtric distribution 
   
-  output$hg_cdf <- renderPlot({
+  
+  #Functia de masa
+  output$hg_pmf <- renderPlot({
     x <- seq(0, input$hg_k)
-    cdf <- dhyper(x, input$hg_alb, input$hg_n, input$hg_k)
-    plot(x, cdf , type = "h", 
+    pmf <- dhyper(x, input$hg_alb, input$hg_n, input$hg_k)
+    plot(x, pmf , type = "h", 
          xlab = "k", 
          ylab = "P(X=k)", 
          main = "Functia de masa")
   })
   
-  output$hg_pmf <- renderPlot({
+  #Functia de repartitie
+  output$hg_cdf <- renderPlot({
     x <- seq(0, input$hg_k)
-    pmf <- phyper(x, input$hg_alb, input$hg_n, input$hg_k)
-    plot(x, pmf, type = "s", 
+    cdf <- phyper(x, input$hg_alb, input$hg_n, input$hg_k)
+    plot(x, cdf, type = "s", 
          xlab = "x", 
          ylab = "Fx(x)", 
          main = "Functia de repartitie")
   })
   
+  #Probabilitati
   output$hg_prob <- renderPlot({
     x <- seq(0, input$hg_k)
     pmf <- phyper(x, input$hg_alb, input$hg_n, input$hg_k)
     plot_bars(x, pmf,input$hg_a ,input$hg_b,input$hg_k)
   })
 
+  #Poisson 
   
-  # Negative Binomial distribution
+  #Functia de masa
   
-  # output$nbinom_cdf <- renderPlot({
-  #   r <- input$nbinom_r
-  #   p <- input$nbinom_p
-  #   x <- 0:20
-  #   y <- pbeta(1 - p, x + 1, r)
-  #   curve(y, from = 0, to = max(x), xlab = "x", ylab = "F(X <= x)", main = "Negative Binomial CDF")
-  # })
-  # output$nbinom_pmf <- renderPlot({
-  #   r <- input$nbinom_r
-  #   p <- input$nbinom_p
-  #   n <- input$nbinom_n
-  #   y <- pnegbin(x, r, p)
-  #   plot(x, y, type = "h", xlab = "Nr succese", ylab = "Probabilitatea", main = "Negative Binomial CDF")  })
-  # 
+  
+  output$pois_pmf <- renderPlot({
+    x <- seq(0, input$pois_lambda * 5)
+    cdf <- dpois(x, input$pois_lambda)
+    plot(x, cdf, type = "h", 
+         xlab = "k", 
+         ylab = "P(X=k)", 
+         main = "Functia de masa")
+  })
+  
+  #Functia de repartitie
+  
+  output$pois_cdf <- renderPlot({
+    x <- seq(0, input$pois_lambda * 5)
+    pmf <- ppois(x, input$pois_lambda)
+    plot(x, pmf, type = "s", 
+         xlab = "x", 
+         ylab = "Fx(x)", 
+         main = "Functia de repartitie")
+  })
+  
+  # Probabilitati
+  output$pois_prob <- renderPlot({
+    x <- seq(0, input$pois_lambda * 5)
+    pmf <- ppois(x, input$pois_lambda)
+    plot_bars(x,pmf,input$pois_b, input$pois_a, input$pois_lambda * 5)
+  })
+  
+  #Uniforma discreta
+  
+  output$ud_pmf <- renderPlot({
+    x <- seq(0, input$ud_max + input$ud_min)
+    pmf <- ddunif(x, input$ud_min, input$ud_max)
+    plot(x, pmf, 
+         type = "h", 
+         xlab = "k", 
+         ylab = "P(X=k)", 
+         main = "Functia de masa")
+  })
+  
+  output$ud_cdf <- renderPlot({
+    x <- seq(0, input$ud_max + input$ud_min)
+    cdf <- pdunif(x, input$ud_min, input$ud_max)
+    plot(x, cdf, 
+         type = "s", 
+         xlab = "x", 
+         ylab = "Fx(x)", 
+         main = "Functia de repartitie")
+  })
+  
+  output$ud_prob <- renderPlot({
+    x <- seq(0, input$ud_max + input$ud_min)
+    cdf <- pdunif(x, input$ud_min, input$ud_max)
+    plot_bars(x, cdf, input$ud_a, input$ud_b, input$ud_max + input$ud_min)
+  })
+    
+  output$geom_pmf <- renderPlot({
+    x <- seq(0, 40)
+    pmf <- dgeom(x, input$geom_p)
+    plot(x, pmf, 
+         type = "h", 
+         xlab = "k", 
+         ylab = "P(X=k)", 
+         main = "Functia de masa")
+  })
+  output$geom_cdf <- renderPlot({
+    x <- seq(0, 40)
+    cdf <- pgeom(x, input$geom_p)
+    plot(x, cdf, 
+         type = "s", 
+         xlab = "x", 
+         ylab = "Fx(x)", 
+         main = "Functia de repartitie")
+  })
+  output$geom_prob <- renderPlot({
+    x <- seq(0, 40)
+    cdf <- pgeom(x, input$geom_p)
+    plot_bars(x, cdf, input$geom_a,input$geom_b,40)
+  })
+  
+
 }
 
 # Run the app ----
