@@ -159,7 +159,7 @@ Codul complet se afla aici:
                        )
       ),
       conditionalPanel(condition = "input.repart == 'Uniforma continua'",
-[O                       sidebarLayout(
+                       sidebarLayout(
                          sidebarPanel(
                            sliderInput(inputId ="cunif_min", label = "Minimul :", min = 0, max = 20, value = 5),
                            sliderInput(inputId ="cunif_max", label = "Maximul :", min = 0, max = 20, value = 15),
@@ -507,7 +507,7 @@ Codul complet se afla aici:
       #cauchy continua------------------------------------------------------------------------------------------------------------------------------
       
       output$density_cauchy <- renderPlot(
-[I        {
+        {
           x <- seq(-1*input$number_cauchy,input$number_cauchy, by = 0.1)
           plot(x, dcauchy(x, input$location_cauchy, input$scale_cauchy), type = "l", xlab ="x", ylab = "f(x)", main = "Densitatea repartitiei Cauchy")
         })
@@ -733,7 +733,7 @@ Codul complet se afla aici:
         plot(x, dunif(x, input$cunif_min, input$cunif_max), type = "l", xlab ="x", ylab = "fx(x)", main = "Densitatea repartitiei uniforme continue")
       })
       output$cunif_rep <- renderPlot({
-[O        x <- seq(0,input$cunif_max + input$cunif_min, by = 0.1 )
+        x <- seq(0,input$cunif_max + input$cunif_min, by = 0.1 )
         plot(x, punif(x, input$cunif_min, input$cunif_max), type = "l", xlab = "x", ylab = "Fx(x)", main = "Functia de repartitie uniforma continua && P(x<=a) P(a<=x<=b) P(x>=b)")
         plot_poligon(x, input$cunif_a, input$cunif_b, punif(x, input$cunif_min, input$cunif_max))
       })
