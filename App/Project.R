@@ -72,7 +72,7 @@ ui <- fluidPage(
                    sidebarLayout(
                      sidebarPanel(
                        sliderInput(inputId ="gamma_s", label = "Forma :", min = 0, max = 20, value = 5),
-                       sliderInput(inputId ="gamma_r", label = "Rata :", min = 0, max = 5, value = 15, step = 0.1),
+                       sliderInput(inputId ="gamma_r", label = "Rata :", min = 0, max = 5, value = 2.5, step = 0.1),
                        numericInput(inputId = "gamma_a", label = "a = ", value = 10, min = 0),
                        numericInput(inputId = "gamma_b", label = "b = ", value = 15, min = 0),
                      ),
